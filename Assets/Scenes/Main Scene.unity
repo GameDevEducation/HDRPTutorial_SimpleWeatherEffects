@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 2164.002, g: 2272.2148, b: 3309.3828, a: 1}
+  m_IndirectSpecularColor: {r: 2160.0273, g: 2263.8164, b: 3286.5195, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -1246,6 +1246,11 @@ MonoBehaviour:
   SnowVFX: {fileID: 1768962550}
   HailVFX: {fileID: 1263165395}
   FogVolume: {fileID: 1805521984}
+  DefaultWeather: {fileID: 11400000, guid: 2e523b5a9eaebe545978b053f74b2c7d, type: 2}
+  DEBUG_PerformTransition: 0
+  DEBUG_TargetPreset: {fileID: 11400000, guid: 88966a57fe6eaed4ca76ed9a7dd9f108, type: 2}
+  DEBUG_TransitionTime: 10
+  CurrentFluctuation: 0
 --- !u!4 &1951656451
 Transform:
   m_ObjectHideFlags: 0
