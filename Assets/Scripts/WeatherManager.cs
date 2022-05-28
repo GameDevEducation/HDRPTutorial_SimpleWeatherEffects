@@ -75,20 +75,40 @@ public class WeatherManager : MonoBehaviour
     [SerializeField] VisualEffect SnowVFX;
     [SerializeField] VisualEffect HailVFX;
     [SerializeField] Volume FogVolume;
+    [SerializeField] Volume CloudVolume;
 
     [Header("Default Preset")]
     [SerializeField] WeatherPreset DefaultWeather;
+
+    [Header("Time Of Day")]
+    [SerializeField] float TimeMultiplier = 90f;
+    [SerializeField] float HoursPerDay = 24f;
+    [SerializeField] float StartTimeInHours = 4f;
+    [SerializeField] float SunriseTime = 6f;
+    [SerializeField] float SunsetTime = 18f;
+    [SerializeField] Transform SunAndMoonSystem;
+    [SerializeField] HDAdditionalLightData SunLightData;
+    [SerializeField] HDAdditionalLightData MoonLightData;
 
     [Header("Transition Debug")]
     [SerializeField] bool DEBUG_PerformTransition;
     [SerializeField] WeatherPreset DEBUG_TargetPreset;
     [SerializeField] float DEBUG_TransitionTime;
 
+    float CurrentTimeInSeconds = 0f;
+    public float CurrentTimeInHours => CurrentTimeInSeconds / 3600f;
+    public bool IsDay => CurrentTimeInHours >= SunriseTime && CurrentTimeInHours <= SunsetTime;
+    public bool IsNight => !IsDay;
+
+    public float DayLength => SunsetTime - SunriseTime;
+    public float NightLength => HoursPerDay - DayLength;
+
     float PreviousRainIntensity;
     float PreviousHailIntensity;
     float PreviousSnowIntensity;
     float PreviousFogIntensity;
     Fog CachedFogComponent;
+    VolumetricClouds CachedCloudComponent;
 
     WeatherPreset CurrentWeather;
 
@@ -121,6 +141,19 @@ public class WeatherManager : MonoBehaviour
                                                                FogIntensity));
         }
 
+        CloudVolume.profile.TryGet<VolumetricClouds>(out CachedCloudComponent);
+        CloudVolume.weight = 1f;
+        if (CachedCloudComponent != null)
+        {
+            CachedCloudComponent.cloudPreset.Override(VolumetricClouds.CloudPresets.Sparse);
+            CachedCloudComponent.sunLightDimmer.Override(1f);
+            CachedCloudComponent.ambientLightProbeDimmer.Override(1f);
+        }
+
+        CurrentTimeInSeconds = StartTimeInHours * 3600f;
+
+        Update_Time();
+
         ChangeWeather(DefaultWeather, 0f);
     }
 
@@ -132,6 +165,8 @@ public class WeatherManager : MonoBehaviour
             DEBUG_PerformTransition = false;
             ChangeWeather(DEBUG_TargetPreset, DEBUG_TransitionTime);
         }
+
+        Update_Time();
 
         Update_WeatherTransition();
 
@@ -160,6 +195,37 @@ public class WeatherManager : MonoBehaviour
                                                                    MinFogAttenuationDistance,
                                                                    FogIntensity);
         }
+    }
+
+    void Update_Time()
+    {
+        // update the current time and ensure is within correct range
+        CurrentTimeInSeconds = (CurrentTimeInSeconds + Time.deltaTime * TimeMultiplier) % (HoursPerDay * 3600f);
+
+        float sunAndMoonAngle = 0f;
+        // update the shadows
+        if (IsDay)
+        {
+            MoonLightData.EnableShadows(false);
+            SunLightData.EnableShadows(true);
+
+            sunAndMoonAngle = 180f * Mathf.InverseLerp(SunriseTime, SunsetTime, CurrentTimeInHours);
+        }
+        else
+        {
+            SunLightData.EnableShadows(false);
+            MoonLightData.EnableShadows(true);
+
+            float hoursIntoNight = 0f;
+            if (CurrentTimeInHours > SunsetTime)
+                hoursIntoNight = CurrentTimeInHours - SunsetTime;
+            else
+                hoursIntoNight = CurrentTimeInHours + (HoursPerDay - SunsetTime);
+
+            sunAndMoonAngle = 180f + 180f * (hoursIntoNight / NightLength);
+        }
+
+        SunAndMoonSystem.eulerAngles = new Vector3(sunAndMoonAngle, 0f, 0f);
     }
 
     void Update_WeatherTransition()
@@ -195,6 +261,10 @@ public class WeatherManager : MonoBehaviour
         State_Hail.SwitchToNewPreset(newWeather.Hail, transitionTime);
         State_Snow.SwitchToNewPreset(newWeather.Snow, transitionTime);
         State_Fog.SwitchToNewPreset(newWeather.Fog, transitionTime);
+
+        CachedCloudComponent.cloudPreset.value = newWeather.CloudPreset;
+        CachedCloudComponent.sunLightDimmer.value = newWeather.SunLightDimmer;
+        CachedCloudComponent.ambientLightProbeDimmer.value = newWeather.AmbientLightDimmer;
 
         // setup for the fluctuation
         InitialFluctuation = CurrentFluctuation;

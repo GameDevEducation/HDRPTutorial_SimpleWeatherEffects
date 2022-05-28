@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Rendering.HighDefinition;
 
 [System.Serializable]
 public class WeatherElementConfig
@@ -33,6 +34,11 @@ public class WeatherPreset : ScriptableObject
     public WeatherElementConfig Hail;
     public WeatherElementConfig Snow;
     public WeatherElementConfig Fog;
+
+    [Header("Cloud Configuration")]
+    public VolumetricClouds.CloudPresets CloudPreset = VolumetricClouds.CloudPresets.Sparse;
+    [Range(0f, 1f)] public float SunLightDimmer = 1f;
+    [Range(0f, 1f)] public float AmbientLightDimmer = 1f;
 
     [Header("Overall")]
     [Range(0f, 1f)] public float FluctuationAmount = 0f;

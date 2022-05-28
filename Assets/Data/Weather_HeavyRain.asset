@@ -32,6 +32,9 @@ MonoBehaviour:
     FluctuationAmount: 0
     MinFluctuationInterval: 0
     MaxFluctuationInterval: 0
+  CloudPreset: 3
+  SunLightDimmer: 0
+  AmbientLightDimmer: 0
   FluctuationAmount: 0.1
   MinFluctuationInterval: 20
   MaxFluctuationInterval: 60
